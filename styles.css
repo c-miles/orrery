@@ -31,7 +31,6 @@
   gap: 6px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  scrollbar-width: thin;
   width: 100%;
 }
 

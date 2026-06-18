@@ -14,8 +14,8 @@ export default class OrreryPlugin extends Plugin {
 
     this.addRibbonIcon("orbit", "Open orrery", () => void this.activateView());
     this.addCommand({
-      id: "open-orrery",
-      name: "Open orrery",
+      id: "open",
+      name: "Open",
       callback: () => void this.activateView(),
     });
 
@@ -43,11 +43,12 @@ export default class OrreryPlugin extends Plugin {
       leaf = workspace.getLeaf(true);
       await leaf.setViewState({ type: ORRERY_VIEW_TYPE, active: true });
     }
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loaded = (await this.loadData()) as Partial<OrrerySettings> | null;
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
   }
 
   async saveSettings(): Promise<void> {

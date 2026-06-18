@@ -1,4 +1,5 @@
-// Deep-space backdrop layers (three-only, no Obsidian). Lifted from Vantage's
+// Deep-space backdrop layers (three, plus the host's activeDocument global for
+// the offscreen sprite canvas). Lifted from Vantage's
 // graph view: a soft round point sprite, a faint starfield, a procedural nebula
 // sphere, and a warm core haze. Deterministic scatter (no Math.random) so the
 // backdrop is stable frame to frame.
@@ -10,7 +11,7 @@ let _dotTex: THREE.Texture | null = null;
 function dotTexture(): THREE.Texture {
   if (_dotTex) return _dotTex;
   const size = 64;
-  const c = document.createElement("canvas");
+  const c = activeDocument.createElement("canvas");
   c.width = c.height = size;
   const ctx = c.getContext("2d")!;
   const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);

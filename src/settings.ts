@@ -99,7 +99,6 @@ export class OrrerySettingTab extends PluginSettingTab {
         sl
           .setLimits(0, 2, 0.05)
           .setValue(this.plugin.settings.rotateSpeed)
-          .setDynamicTooltip()
           .onChange(async (v) => {
             this.plugin.settings.rotateSpeed = v;
             await this.plugin.saveSettings();
@@ -113,7 +112,6 @@ export class OrrerySettingTab extends PluginSettingTab {
         sl
           .setLimits(0, 3, 0.1)
           .setValue(this.plugin.settings.bloomStrength)
-          .setDynamicTooltip()
           .onChange(async (v) => {
             this.plugin.settings.bloomStrength = v;
             await this.plugin.saveSettings();
@@ -127,7 +125,6 @@ export class OrrerySettingTab extends PluginSettingTab {
         sl
           .setLimits(0.3, 3, 0.1)
           .setValue(this.plugin.settings.nodeScale)
-          .setDynamicTooltip()
           .onChange(async (v) => {
             this.plugin.settings.nodeScale = v;
             await this.plugin.saveSettings();
@@ -143,7 +140,6 @@ export class OrrerySettingTab extends PluginSettingTab {
         sl
           .setLimits(0.3, 2.5, 0.1)
           .setValue(this.plugin.settings.initialZoom)
-          .setDynamicTooltip()
           .onChange(async (v) => {
             this.plugin.settings.initialZoom = v;
             await this.plugin.saveSettings();
