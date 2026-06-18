@@ -16,12 +16,9 @@ function vaultPaths(app: App): string[] {
 }
 
 export function buildVaultGraph(app: App, opts: VaultGraphOptions = {}): OrreryData {
+  // VaultGraphOptions is structurally BuildOptions; pass it straight through.
   const resolved = (app.metadataCache.resolvedLinks ?? {}) as ResolvedLinks;
-  return buildGraph(vaultPaths(app), resolved, {
-    excludeFolders: opts.excludeFolders,
-    onlyFolder: opts.onlyFolder,
-    groupBy: opts.groupBy,
-  });
+  return buildGraph(vaultPaths(app), resolved, opts);
 }
 
 export function vaultFolders(app: App): string[] {

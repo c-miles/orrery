@@ -75,6 +75,32 @@ describe("buildGraph", () => {
     });
     expect(excl.nodes.length).toBe(0);
   });
+
+  it("empty inputs yield an empty graph", () => {
+    expect(buildGraph([], {})).toEqual({ nodes: [], links: [] });
+  });
+
+  it("excluding a folder also drops links pointing into it", () => {
+    const g = buildGraph(paths, resolved as any, { excludeFolders: new Set(["B"]) });
+    expect(
+      g.links.every((l) => !l.source.startsWith("B/") && !l.target.startsWith("B/"))
+    ).toBe(true);
+    // one->two and two->one remain; one->three (into B) is gone
+    expect(g.links.length).toBe(2);
+  });
+
+  it("collapses repeated references between a pair into a single link", () => {
+    const p = ["X/a.md", "X/b.md"];
+    const r = { "X/a.md": { "X/b.md": 7 } };
+    const g = buildGraph(p, r as any);
+    expect(g.links.length).toBe(1);
+    expect(g.nodes.find((n) => n.id === "X/a.md")!.deg).toBe(1);
+    expect(g.nodes.find((n) => n.id === "X/b.md")!.deg).toBe(1);
+  });
+
+  it("onlyFolder that matches nothing yields an empty graph", () => {
+    expect(buildGraph(paths, resolved as any, { onlyFolder: "Nope" }).nodes).toEqual([]);
+  });
 });
 
 describe("foldersIn", () => {

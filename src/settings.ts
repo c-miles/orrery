@@ -62,7 +62,6 @@ export class OrrerySettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Orrery" });
 
     new Setting(containerEl)
       .setName("Show folder filter bar")
@@ -137,7 +136,16 @@ export class OrrerySettingTab extends PluginSettingTab {
       .setDesc("CSS color behind the graph.")
       .addText((t) =>
         t.setValue(this.plugin.settings.background).onChange(async (v) => {
-          this.plugin.settings.background = v.trim() || "#000006";
+          const c = v.trim();
+          // Only accept a value the browser (and three.js) can actually parse;
+          // otherwise keep the current background instead of silently going black.
+          if (!c) {
+            this.plugin.settings.background = "#000006";
+          } else if (CSS.supports("color", c)) {
+            this.plugin.settings.background = c;
+          } else {
+            return;
+          }
           await this.plugin.saveSettings();
         })
       );
@@ -177,10 +185,9 @@ export class OrrerySettingTab extends PluginSettingTab {
         t.inputEl.rows = 4;
       });
 
-    const note = containerEl.createEl("p", {
+    containerEl.createEl("p", {
       text: "Reopen the Orrery view to apply changes.",
+      cls: "orrery-settings-note",
     });
-    note.style.color = "var(--text-muted)";
-    note.style.fontSize = "var(--font-ui-smaller)";
   }
 }

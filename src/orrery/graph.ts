@@ -7,10 +7,9 @@ import type { OrreryData, OrreryNode } from "./types";
 // Obsidian's resolvedLinks shape: { [sourcePath]: { [destPath]: count } }.
 export type ResolvedLinks = Record<string, Record<string, number>>;
 
-// How nodes are bucketed for color. "top" = top-level folder (few colors,
-// clean); "folder" = the file's immediate containing folder path (more colors,
-// closer to a hand-tuned palette). Filtering always uses the top-level folder
-// regardless of this.
+// How nodes are bucketed for color. "top" = top-level folder (few, broad color
+// groups); "folder" = the file's immediate containing folder path (more colors,
+// finer-grained). Filtering always uses the top-level folder regardless of this.
 export type GroupBy = "top" | "folder";
 
 export interface BuildOptions {

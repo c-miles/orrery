@@ -22,6 +22,17 @@ describe("parseOverrides", () => {
     const o = parseOverrides("Projects: 8aff80\nAreas: #ffca80\nno-colon line\nBad: zzzz\n");
     expect(o).toEqual({ Projects: "#8aff80", Areas: "#ffca80" });
   });
+  it("last duplicate key wins", () => {
+    expect(parseOverrides("Projects: #111111\nProjects: #222222")).toEqual({
+      Projects: "#222222",
+    });
+  });
+  it("keeps uppercase hex and multi-word folder keys", () => {
+    expect(parseOverrides("My Folder: #A1B2C3")).toEqual({ "My Folder": "#A1B2C3" });
+  });
+  it("rejects 3-digit and 8-digit hex (only #rrggbb)", () => {
+    expect(parseOverrides("A: #fff\nB: #aabbccdd")).toEqual({});
+  });
 });
 
 describe("makePalette", () => {

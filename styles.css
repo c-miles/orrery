@@ -75,3 +75,9 @@
   padding: 12px;
   font-size: 0.85em;
 }
+
+/* muted helper text in the settings tab */
+.orrery-settings-note {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}

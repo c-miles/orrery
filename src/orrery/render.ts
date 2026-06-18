@@ -11,9 +11,12 @@ import { makeNebula, makeStarfield, makeHaze } from "./backdrop";
 import type { OrreryData, OrreryHandle, OrreryNode, OrreryOptions } from "./types";
 
 // hex (#rrggbb) + alpha -> rgba() string (three-forcegraph reads the alpha out
-// of the link color string).
+// of the link color string). Guards against anything that is not #rrggbb (a host
+// could supply a named color or shorthand hex) so we never emit rgba(NaN,...),
+// which silently makes the edge disappear.
 function rgba(hex: string, a: number): string {
-  const h = hex.replace("#", "");
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex);
+  const h = m ? m[1] : "8899bb";
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
@@ -27,9 +30,18 @@ export function renderOrrery(
   data: OrreryData,
   options: OrreryOptions
 ): OrreryHandle {
+  // Insurance: this is the host-agnostic public entry point. Today's callers
+  // guard the empty case, but a future host might not, and an empty graph would
+  // throw in the hub reduce below. Return an inert handle.
+  if (!data.nodes.length) {
+    return { resize() {}, destroy() {} };
+  }
+
   const color = options.colorForGroup;
   const groupById = new Map<string, string>();
   for (const n of data.nodes) groupById.set(n.id, n.group);
+  // Link endpoints are always known nodes (buildGraph only emits links between
+  // in-scope nodes), so this fallback is belt-and-suspenders.
   const groupOf = (id: string) => groupById.get(id) ?? "(root)";
 
   const maxDeg = Math.max(1, ...data.nodes.map((n) => n.deg));
@@ -52,13 +64,14 @@ export function renderOrrery(
   graph.showNavInfo(false);
   graph.backgroundColor(options.background);
   graph.graphData(data as any);
-  graph.nodeLabel((n: any) => n.label);
-  graph.nodeColor((n: any) => color(n.group));
-  graph.nodeVal((n: any) => 1 + (n.deg / maxDeg) * 10);
+  graph.nodeLabel((n: OrreryNode) => n.label);
+  graph.nodeColor((n: OrreryNode) => color(n.group));
+  graph.nodeVal((n: OrreryNode) => 1 + (n.deg / maxDeg) * 10);
   graph.nodeResolution(14);
 
   // Seed + expand: hovering a node keeps it and its neighbours bright and dims
-  // the rest. hoverId is read by the link color accessor below.
+  // the rest. hoverId is read by the link color accessor below. (Link accessors
+  // stay `any`: post-graphData, l.source/target are node refs, not strings.)
   let hoverId: string | null = null;
   const linkColorFn = (l: any): string => {
     const s = (l.source?.id ?? l.source) as string;
@@ -78,10 +91,11 @@ export function renderOrrery(
   graph.linkWidth(0.5);
   graph.warmupTicks(220); // settle most of the layout before first paint
   graph.cooldownTicks(60);
-  graph.onNodeClick((n: any) => options.onNodeClick?.(n as OrreryNode));
+  graph.onNodeClick((n: OrreryNode) => options.onNodeClick?.(n));
 
-  // Camera set up front (no jump) at a distance scaled by node count, from a
-  // random point on the surrounding sphere so it starts at a fresh orientation.
+  // Camera placed up front with a 0s transition (no fly-in animation), at a
+  // distance scaled by node count, from a random point on the surrounding sphere
+  // so each open starts at a fresh orientation.
   const dist = Math.min(580, 235 + Math.sqrt(data.nodes.length) * 30);
   const u = Math.random();
   const v = Math.random();
@@ -95,10 +109,12 @@ export function renderOrrery(
   graph.cameraPosition(startPos, { x: 0, y: 0, z: 0 }, 0);
 
   // "Planet" nodes: additive spheres so dense regions self-brighten into hot
-  // cores. One shared geometry; per-node materials so hover can dim each one.
+  // cores. This custom three object supersedes the default sphere; nodeVal above
+  // still feeds the force layout + hit-testing. One shared geometry; per-node
+  // materials so hover can dim each one.
   const sphereGeo = new THREE.SphereGeometry(1, 16, 16);
   const nodeMeshes = new Map<string, THREE.Mesh>();
-  graph.nodeThreeObject((n: any) => {
+  graph.nodeThreeObject((n: OrreryNode) => {
     const r = (2.2 + (n.deg / maxDeg) * 7) * options.nodeScale;
     const mat = new THREE.MeshBasicMaterial({
       color: color(n.group),
@@ -112,8 +128,8 @@ export function renderOrrery(
     return mesh;
   });
 
-  graph.onNodeHover((n: any) => {
-    hoverId = n ? (n.id as string) : null;
+  graph.onNodeHover((n: OrreryNode | null) => {
+    hoverId = n ? n.id : null;
     const keep = hoverId ? adjacency.get(hoverId) : null;
     nodeMeshes.forEach((mesh, id) => {
       const on = !hoverId || id === hoverId || (keep ? keep.has(id) : false);
@@ -135,6 +151,8 @@ export function renderOrrery(
   if (options.showHaze) {
     const haze = makeHaze();
     graph.scene().add(haze);
+    // Anchor the haze on the highest-degree node so the warm glow sits on the
+    // densest cluster (the visual "core").
     const hub: any = data.nodes.reduce(
       (a, b) => (b.deg > a.deg ? b : a),
       data.nodes[0]
@@ -163,12 +181,18 @@ export function renderOrrery(
   graph.width(mount.clientWidth || 800);
   graph.height(mount.clientHeight || 600);
 
+  // Guard against double teardown (and resize-after-destroy), since destroy()
+  // reaches into the library's _destructor().
+  let destroyed = false;
   return {
     resize(width: number, height: number) {
+      if (destroyed) return;
       graph.width(width || 800);
       graph.height(height || 600);
     },
     destroy() {
+      if (destroyed) return;
+      destroyed = true;
       graph._destructor();
     },
   };

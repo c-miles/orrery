@@ -1,9 +1,10 @@
-import { ItemView, TFile, type WorkspaceLeaf } from "obsidian";
+import { ItemView, type WorkspaceLeaf } from "obsidian";
 import type OrreryPlugin from "../main";
 import { renderOrrery } from "../orrery/render";
-import type { OrreryHandle, OrreryNode } from "../orrery/types";
+import type { OrreryData, OrreryHandle, OrreryNode } from "../orrery/types";
 import { buildVaultGraph, vaultFolders, type VaultGraphOptions } from "./graph-data";
 import { optionsFromSettings } from "../settings";
+import { openNoteInTab } from "./open-note";
 
 export const ORRERY_VIEW_TYPE = "orrery-view";
 
@@ -60,14 +61,15 @@ export class OrreryView extends ItemView {
 
   // Re-render only when more links are available than the last build (the
   // cold-start catch-up), so a routine edit's "resolved" event doesn't reset the
-  // camera while the user is looking.
+  // camera while the user is looking. Reuse the freshly-built data so render()
+  // doesn't rebuild the whole graph a second time.
   private refreshIfGrown(): void {
-    const links = buildVaultGraph(this.plugin.app, this.scopeOpts()).links.length;
-    if (links <= this.lastLinkCount) return;
-    this.render();
+    const data = buildVaultGraph(this.plugin.app, this.scopeOpts());
+    if (data.links.length <= this.lastLinkCount) return;
+    this.render(data);
   }
 
-  private render(): void {
+  private render(prebuilt?: OrreryData): void {
     this.teardown();
     const root = this.contentEl;
     root.empty();
@@ -81,7 +83,7 @@ export class OrreryView extends ItemView {
     }
 
     const mount = root.createDiv({ cls: "orrery-canvas" });
-    const data = buildVaultGraph(this.plugin.app, this.scopeOpts());
+    const data = prebuilt ?? buildVaultGraph(this.plugin.app, this.scopeOpts());
     this.lastLinkCount = data.links.length;
     if (!data.nodes.length) {
       mount.createDiv({ cls: "orrery-error", text: "No notes in scope." });
@@ -90,7 +92,7 @@ export class OrreryView extends ItemView {
 
     const options = {
       ...optionsFromSettings(this.plugin.settings),
-      onNodeClick: (node: OrreryNode) => this.openNode(node),
+      onNodeClick: (node: OrreryNode) => openNoteInTab(this.plugin, node.id),
     };
 
     this.handle = renderOrrery(mount, data, options);
@@ -115,13 +117,6 @@ export class OrreryView extends ItemView {
         this.onlyFolder = next;
         this.render();
       });
-    }
-  }
-
-  private openNode(node: OrreryNode): void {
-    const file = this.plugin.app.vault.getAbstractFileByPath(node.id);
-    if (file instanceof TFile) {
-      void this.plugin.app.workspace.getLeaf("tab").openFile(file);
     }
   }
 
