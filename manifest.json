@@ -1,7 +1,7 @@
 {
   "id": "orrery",
   "name": "Orrery",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "1.8.0",
   "description": "Render your vault's link graph as a cinematic, auto-rotating 3D orrery: bloom-lit nodes, a nebula backdrop, and a starfield.",
   "author": "Chris Miles",

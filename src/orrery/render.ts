@@ -3,17 +3,26 @@
 // and returns a handle to resize/destroy. No Obsidian imports, so Vantage or any
 // host can call it. Lifted from Vantage's makeGraph(), with the hardcoded folder
 // palette and tuning constants replaced by options.
-import ForceGraph3D, { ForceGraph3DInstance } from "3d-force-graph";
+import ForceGraph3D, {
+  type ForceGraph3DInstance,
+  type NodeObject,
+  type LinkObject,
+} from "3d-force-graph";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import * as THREE from "three";
 import { hash01 } from "./colors";
 import { makeNebula, makeStarfield, makeHaze } from "./backdrop";
 import type { OrreryData, OrreryHandle, OrreryNode, OrreryOptions } from "./types";
 
-// hex (#rrggbb) + alpha -> rgba() string (three-forcegraph reads the alpha out
-// of the link color string). Guards against anything that is not #rrggbb (a host
-// could supply a named color or shorthand hex) so we never emit rgba(NaN,...),
-// which silently makes the edge disappear.
+// How the force-graph engine sees our nodes/links: it augments nodes with x/y/z
+// at runtime and swaps each link's source/target between an id string and a node
+// reference once the layout initializes.
+type ON = NodeObject & OrreryNode;
+type OL = LinkObject<ON>;
+
+// hex (#rrggbb) + alpha -> rgba() string (three-forcegraph reads the alpha out of
+// the link color string). Guards against anything that is not #rrggbb so we never
+// emit rgba(NaN,...), which silently makes the edge disappear.
 function rgba(hex: string, a: number): string {
   const m = /^#([0-9a-fA-F]{6})$/.exec(hex);
   const h = m ? m[1] : "8899bb";
@@ -21,6 +30,12 @@ function rgba(hex: string, a: number): string {
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${a})`;
+}
+
+// The id of a link endpoint, whether it is still an id string or has been
+// replaced by a node reference once the layout initializes.
+function endId(end: OL["source"]): string {
+  return typeof end === "object" && end !== null ? String(end.id) : String(end);
 }
 
 const EDGE_DIM = "#3a5a82"; // resting edge color
@@ -58,48 +73,45 @@ export function renderOrrery(
     adjacency.get(l.target)!.add(l.source);
   }
 
-  // Config applied as statements (chaining returns the inner three-forcegraph
-  // type, which tsc treats as incompatible with the outer instance type).
-  const graph: ForceGraph3DInstance = new ForceGraph3D(mount, { controlType: "orbit" });
+  // Typed instance: parametrizing over ON/OL makes every accessor callback below
+  // receive our node/link types instead of `any`. (The constructor itself is not
+  // generic, so we assert the parametrized instance type here once.)
+  const graph = new ForceGraph3D(mount, {
+    controlType: "orbit",
+  }) as unknown as ForceGraph3DInstance<ON, OL>;
   graph.showNavInfo(false);
   graph.backgroundColor(options.background);
-  graph.graphData(data as any);
-  graph.nodeLabel((n: OrreryNode) => n.label);
-  graph.nodeColor((n: OrreryNode) => color(n.group));
-  graph.nodeVal((n: OrreryNode) => 1 + (n.deg / maxDeg) * 10);
+  graph.graphData(data as unknown as { nodes: ON[]; links: OL[] });
+  graph.nodeLabel((n) => n.label);
+  graph.nodeColor((n) => color(n.group));
+  graph.nodeVal((n) => 1 + (n.deg / maxDeg) * 10);
   graph.nodeResolution(14);
 
   // Seed + expand: hovering a node keeps it and its neighbours bright and dims
-  // the rest. hoverId is read by the link color accessor below. (Link accessors
-  // stay `any`: post-graphData, l.source/target are node refs, not strings.)
+  // the rest. hoverId is read by the link color accessor below.
   let hoverId: string | null = null;
-  const linkColorFn = (l: any): string => {
-    const s = (l.source?.id ?? l.source) as string;
-    const t = (l.target?.id ?? l.target) as string;
+  const linkColorFn = (l: OL): string => {
+    const s = endId(l.source);
+    const t = endId(l.target);
     if (!hoverId) return rgba(EDGE_DIM, 0.32);
     if (s === hoverId || t === hoverId) return rgba(color(groupOf(s)), 0.9);
     return rgba(EDGE_DIM, 0.04);
   };
   graph.linkCurvature(0.3);
-  graph.linkCurveRotation((l: any) => {
-    const s = (l.source?.id ?? l.source) as string;
-    const t = (l.target?.id ?? l.target) as string;
-    return hash01(s + "->" + t) * Math.PI * 2;
-  });
+  graph.linkCurveRotation(
+    (l) => hash01(endId(l.source) + "->" + endId(l.target)) * Math.PI * 2
+  );
   graph.linkColor(linkColorFn);
   graph.linkOpacity(1); // per-edge alpha carried in the color string
   graph.linkWidth(0.5);
   graph.warmupTicks(220); // settle most of the layout before first paint
   graph.cooldownTicks(60);
-  graph.onNodeClick((n: OrreryNode) => options.onNodeClick?.(n));
+  graph.onNodeClick((n) => options.onNodeClick?.(n));
 
   // Camera placed up front with a 0s transition (no fly-in animation), at a
   // distance scaled by node count, from a random point on the surrounding sphere
-  // so each open starts at a fresh orientation.
-  // Frame the whole graph at a glance: distance grows with node count (a 3D
-  // force layout's extent scales ~sqrt(n)). The old hard 580 cap zoomed large
-  // vaults in too far, leaving nodes off-screen until they rotated in. initialZoom
-  // lets the user pull back further (<1) or move in closer (>1).
+  // so each open starts at a fresh orientation. initialZoom lets the user pull
+  // back further (<1) or move in closer (>1).
   const baseDist = Math.min(2600, 250 + Math.sqrt(data.nodes.length) * 40);
   const dist = baseDist / Math.max(0.1, options.initialZoom);
   const u = Math.random();
@@ -119,7 +131,7 @@ export function renderOrrery(
   // materials so hover can dim each one.
   const sphereGeo = new THREE.SphereGeometry(1, 16, 16);
   const nodeMeshes = new Map<string, THREE.Mesh>();
-  graph.nodeThreeObject((n: OrreryNode) => {
+  graph.nodeThreeObject((n) => {
     const r = (2.2 + (n.deg / maxDeg) * 7) * options.nodeScale;
     const mat = new THREE.MeshBasicMaterial({
       color: color(n.group),
@@ -133,7 +145,7 @@ export function renderOrrery(
     return mesh;
   });
 
-  graph.onNodeHover((n: OrreryNode | null) => {
+  graph.onNodeHover((n) => {
     hoverId = n ? n.id : null;
     const keep = hoverId ? adjacency.get(hoverId) : null;
     nodeMeshes.forEach((mesh, id) => {
@@ -144,11 +156,16 @@ export function renderOrrery(
     mount.style.cursor = hoverId ? "pointer" : "";
   });
 
-  // Stronger repulsion + a link distance gives planet-like spacing.
-  const charge: any = graph.d3Force("charge");
-  if (charge && charge.strength) charge.strength(-140);
-  const link: any = graph.d3Force("link");
-  if (link && link.distance) link.distance(60);
+  // Stronger repulsion + a link distance gives planet-like spacing. d3Force
+  // returns the underlying d3-force-3d force, which the public types leave loose.
+  const charge = graph.d3Force("charge") as unknown as
+    | { strength(s: number): unknown }
+    | undefined;
+  if (charge) charge.strength(-140);
+  const linkForce = graph.d3Force("link") as unknown as
+    | { distance(d: number): unknown }
+    | undefined;
+  if (linkForce) linkForce.distance(60);
 
   // Backdrop stack (each toggleable).
   if (options.showNebula) graph.scene().add(makeNebula());
@@ -157,13 +174,18 @@ export function renderOrrery(
     const haze = makeHaze();
     graph.scene().add(haze);
     // Anchor the haze on the highest-degree node so the warm glow sits on the
-    // densest cluster (the visual "core").
-    const hub: any = data.nodes.reduce(
-      (a, b) => (b.deg > a.deg ? b : a),
-      data.nodes[0]
-    );
+    // densest cluster (the visual "core"). The engine writes x/y/z onto our node
+    // objects in place, so the hub has coordinates by the time the engine stops.
+    const nodes = data.nodes as unknown as ON[];
+    const hub = nodes.reduce((a, b) => (b.deg > a.deg ? b : a), nodes[0]);
     graph.onEngineStop(() => {
-      if (hub && typeof hub.x === "number") haze.position.set(hub.x, hub.y, hub.z);
+      if (
+        typeof hub.x === "number" &&
+        typeof hub.y === "number" &&
+        typeof hub.z === "number"
+      ) {
+        haze.position.set(hub.x, hub.y, hub.z);
+      }
     });
   }
 
@@ -177,11 +199,13 @@ export function renderOrrery(
   graph.postProcessingComposer().addPass(bloom);
   graph.scene().add(new THREE.AmbientLight(0xffffff, 0.5));
 
-  const controls: any = graph.controls();
-  if (controls) {
-    controls.autoRotate = options.rotateSpeed > 0;
-    controls.autoRotateSpeed = options.rotateSpeed;
-  }
+  // controls() is typed as a bare object; at runtime it is three's OrbitControls.
+  const controls = graph.controls() as {
+    autoRotate: boolean;
+    autoRotateSpeed: number;
+  };
+  controls.autoRotate = options.rotateSpeed > 0;
+  controls.autoRotateSpeed = options.rotateSpeed;
 
   graph.width(mount.clientWidth || 800);
   graph.height(mount.clientHeight || 600);
