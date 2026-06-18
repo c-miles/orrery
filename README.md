@@ -1,5 +1,7 @@
 # Orrery
 
+![A rotating 3D orrery of an Obsidian vault's link graph](docs/orrery.gif)
+
 Orrery turns your Obsidian vault into a slowly rotating 3D galaxy. Every note is a glowing star, every link is a thread between them, and the whole thing drifts through space over a nebula and a field of stars. The name comes from the old mechanical models of the solar system, the ones with planets circling on brass arms.
 
 It is mostly here to look incredible, but it is also a genuinely nice way to see the shape of your vault: which notes are hubs, how your folders cluster together, and what is floating off on its own.
