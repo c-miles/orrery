@@ -1,0 +1,12 @@
+# build output (copied into the vault, not committed)
+main.js
+main.js.map
+
+# deps
+node_modules/
+
+# local plugin state
+data.json
+
+# os
+.DS_Store

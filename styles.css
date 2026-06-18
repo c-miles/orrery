@@ -1,0 +1,94 @@
+/* Orrery — a cinematic 3D graph of your vault. */
+
+.orrery-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #05060a;
+}
+
+.orrery-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  flex: 0 0 auto;
+  border-bottom: 1px solid rgba(128, 255, 234, 0.18);
+  flex-wrap: wrap;
+}
+
+.orrery-canvas {
+  flex: 1 1 auto;
+  position: relative;
+  min-height: 400px;
+  overflow: hidden;
+}
+
+.orrery-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.orrery-chip {
+  background: rgba(45, 43, 56, 0.7);
+  color: var(--text-muted);
+  border: 1px solid rgba(128, 255, 234, 0.18);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.72em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.orrery-chip:hover {
+  color: #80ffea;
+  border-color: rgba(128, 255, 234, 0.45);
+}
+.orrery-chip.is-active {
+  color: #05060a;
+  background: #80ffea;
+  border-color: #80ffea;
+  box-shadow: 0 0 10px rgba(128, 255, 234, 0.5);
+  font-weight: 700;
+}
+
+.orrery-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.72em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.orrery-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.orrery-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* embedded-in-a-note orrery (the ```orrery code block). Height set inline. */
+.orrery-embed {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(128, 255, 234, 0.22);
+  box-shadow: 0 0 24px rgba(8, 7, 14, 0.9), inset 0 0 30px rgba(149, 128, 255, 0.06);
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.orrery-error {
+  color: #ff8080;
+  padding: 12px;
+  font-size: 0.85em;
+}
