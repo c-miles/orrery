@@ -12,6 +12,7 @@ export class OrreryView extends ItemView {
   private handle: OrreryHandle | null = null;
   private ro: ResizeObserver | null = null;
   private onlyFolder: string | null = null;
+  private filtersOpen = false; // folder chips + legend collapse behind a toggle
   private lastLinkCount = 0;
 
   constructor(leaf: WorkspaceLeaf, plugin: OrreryPlugin) {
@@ -69,8 +70,22 @@ export class OrreryView extends ItemView {
     root.empty();
     root.addClass("orrery-root");
 
+    // Slim bar: just a toggle by default, so the orrery owns the screen. The
+    // folder chips + legend live in a panel that the toggle reveals.
     const bar = root.createDiv({ cls: "orrery-bar" });
-    const chips = bar.createDiv({ cls: "orrery-chips" });
+    const toggle = bar.createEl("button", { cls: "orrery-toggle" });
+    const caret = toggle.createSpan({ cls: "orrery-caret", text: this.filtersOpen ? "▾" : "▸" });
+    toggle.createSpan({ text: this.onlyFolder ? `Filter: ${this.onlyFolder}` : "Filters" });
+    const panel = bar.createDiv({
+      cls: "orrery-filters" + (this.filtersOpen ? "" : " is-hidden"),
+    });
+    toggle.addEventListener("click", () => {
+      this.filtersOpen = !this.filtersOpen;
+      panel.toggleClass("is-hidden", !this.filtersOpen);
+      caret.setText(this.filtersOpen ? "▾" : "▸");
+    });
+
+    const chips = panel.createDiv({ cls: "orrery-chips" });
     const exclude = this.plugin.excludeSet();
     const folders = ["__all__", ...vaultFolders(this.plugin.app).filter((f) => !exclude.has(f))];
     for (const f of folders) {
@@ -101,8 +116,8 @@ export class OrreryView extends ItemView {
       onNodeClick: (node: OrreryNode) => this.openNode(node),
     };
 
-    // Legend from the groups present in this scope.
-    const legend = bar.createDiv({ cls: "orrery-legend" });
+    // Legend from the groups present in this scope (inside the collapsible panel).
+    const legend = panel.createDiv({ cls: "orrery-legend" });
     for (const g of Array.from(new Set(data.nodes.map((n) => n.group)))) {
       const item = legend.createDiv({ cls: "orrery-legend-item" });
       const dot = item.createSpan({ cls: "orrery-legend-dot" });

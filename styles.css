@@ -24,6 +24,42 @@
   overflow: hidden;
 }
 
+/* collapsed-by-default toggle that reveals the filter panel */
+.orrery-toggle {
+  background: rgba(45, 43, 56, 0.7);
+  color: var(--text-muted);
+  border: 1px solid rgba(128, 255, 234, 0.18);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 0.72em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.orrery-toggle:hover {
+  color: #80ffea;
+  border-color: rgba(128, 255, 234, 0.45);
+}
+.orrery-caret {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+/* the revealable panel holding chips + legend */
+.orrery-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.orrery-filters.is-hidden {
+  display: none;
+}
+
 .orrery-chips {
   display: flex;
   gap: 6px;
