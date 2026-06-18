@@ -24,7 +24,7 @@ export class OrreryView extends ItemView {
     return ORRERY_VIEW_TYPE;
   }
   getDisplayText(): string {
-    return "Orrery";
+    return "orrery";
   }
   getIcon(): string {
     return "orbit";

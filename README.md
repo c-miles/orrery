@@ -1,4 +1,4 @@
-# Orrery
+# orrery
 
 Render your Obsidian vault's link graph as a cinematic, auto-rotating 3D orrery: bloom-lit node cores, a procedural nebula backdrop, a faint starfield, and a warm core haze. Nodes are colored automatically by their top-level folder, so any vault looks good with zero configuration.
 
