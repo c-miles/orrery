@@ -2,7 +2,7 @@ import { ItemView, TFile, type WorkspaceLeaf } from "obsidian";
 import type OrreryPlugin from "../main";
 import { renderOrrery } from "../orrery/render";
 import type { OrreryHandle, OrreryNode } from "../orrery/types";
-import { buildVaultGraph, vaultFolders } from "./graph-data";
+import { buildVaultGraph, vaultFolders, type VaultGraphOptions } from "./graph-data";
 import { optionsFromSettings } from "../settings";
 
 export const ORRERY_VIEW_TYPE = "orrery-view";
@@ -12,7 +12,6 @@ export class OrreryView extends ItemView {
   private handle: OrreryHandle | null = null;
   private ro: ResizeObserver | null = null;
   private onlyFolder: string | null = null;
-  private filtersOpen = false; // folder chips + legend collapse behind a toggle
   private lastLinkCount = 0;
 
   constructor(leaf: WorkspaceLeaf, plugin: OrreryPlugin) {
@@ -51,8 +50,12 @@ export class OrreryView extends ItemView {
     this.handle = null;
   }
 
-  private scopeOpts(): { excludeFolders: Set<string>; onlyFolder: string | null } {
-    return { excludeFolders: this.plugin.excludeSet(), onlyFolder: this.onlyFolder };
+  private scopeOpts(): VaultGraphOptions {
+    return {
+      excludeFolders: this.plugin.excludeSet(),
+      onlyFolder: this.onlyFolder,
+      groupBy: this.plugin.settings.colorBy,
+    };
   }
 
   // Re-render only when more links are available than the last build (the
@@ -70,22 +73,33 @@ export class OrreryView extends ItemView {
     root.empty();
     root.addClass("orrery-root");
 
-    // Slim bar: just a toggle by default, so the orrery owns the screen. The
-    // folder chips + legend live in a panel that the toggle reveals.
-    const bar = root.createDiv({ cls: "orrery-bar" });
-    const toggle = bar.createEl("button", { cls: "orrery-toggle" });
-    const caret = toggle.createSpan({ cls: "orrery-caret", text: this.filtersOpen ? "▾" : "▸" });
-    toggle.createSpan({ text: this.onlyFolder ? `Filter: ${this.onlyFolder}` : "Filters" });
-    const panel = bar.createDiv({
-      cls: "orrery-filters" + (this.filtersOpen ? "" : " is-hidden"),
-    });
-    toggle.addEventListener("click", () => {
-      this.filtersOpen = !this.filtersOpen;
-      panel.toggleClass("is-hidden", !this.filtersOpen);
-      caret.setText(this.filtersOpen ? "▾" : "▸");
-    });
+    // Folder filter bar is opt-in (Settings -> Show folder filter bar). Off by
+    // default so the orrery owns the whole pane. When on, it's a single,
+    // non-wrapping row of chips so the layout never reflows as you switch.
+    if (this.plugin.settings.showFilters) {
+      this.renderFilterBar(root);
+    }
 
-    const chips = panel.createDiv({ cls: "orrery-chips" });
+    const mount = root.createDiv({ cls: "orrery-canvas" });
+    const data = buildVaultGraph(this.plugin.app, this.scopeOpts());
+    this.lastLinkCount = data.links.length;
+    if (!data.nodes.length) {
+      mount.createDiv({ cls: "orrery-error", text: "No notes in scope." });
+      return;
+    }
+
+    const options = {
+      ...optionsFromSettings(this.plugin.settings),
+      onNodeClick: (node: OrreryNode) => this.openNode(node),
+    };
+
+    this.handle = renderOrrery(mount, data, options);
+    this.attachResize(mount);
+  }
+
+  private renderFilterBar(root: HTMLElement): void {
+    const bar = root.createDiv({ cls: "orrery-bar" });
+    const chips = bar.createDiv({ cls: "orrery-chips" });
     const exclude = this.plugin.excludeSet();
     const folders = ["__all__", ...vaultFolders(this.plugin.app).filter((f) => !exclude.has(f))];
     for (const f of folders) {
@@ -102,33 +116,6 @@ export class OrreryView extends ItemView {
         this.render();
       });
     }
-
-    const mount = root.createDiv({ cls: "orrery-canvas" });
-    const data = buildVaultGraph(this.plugin.app, this.scopeOpts());
-    this.lastLinkCount = data.links.length;
-    if (!data.nodes.length) {
-      mount.createDiv({ cls: "orrery-error", text: "No notes in scope." });
-      return;
-    }
-
-    const options = {
-      ...optionsFromSettings(this.plugin.settings),
-      onNodeClick: (node: OrreryNode) => this.openNode(node),
-    };
-
-    // Legend from the groups present in this scope (inside the collapsible panel).
-    const legend = panel.createDiv({ cls: "orrery-legend" });
-    for (const g of Array.from(new Set(data.nodes.map((n) => n.group)))) {
-      const item = legend.createDiv({ cls: "orrery-legend-item" });
-      const dot = item.createSpan({ cls: "orrery-legend-dot" });
-      const c = options.colorForGroup(g);
-      dot.style.background = c;
-      dot.style.boxShadow = `0 0 6px ${c}`;
-      item.createSpan({ text: g });
-    }
-
-    this.handle = renderOrrery(mount, data, options);
-    this.attachResize(mount);
   }
 
   private openNode(node: OrreryNode): void {

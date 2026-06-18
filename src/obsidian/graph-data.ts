@@ -2,12 +2,13 @@
 // the resolved-links index, then hands off to the pure buildGraph() so all the
 // graph shaping stays testable without a vault.
 import type { App } from "obsidian";
-import { buildGraph, foldersIn, type ResolvedLinks } from "../orrery/graph";
+import { buildGraph, foldersIn, type GroupBy, type ResolvedLinks } from "../orrery/graph";
 import type { OrreryData } from "../orrery/types";
 
 export interface VaultGraphOptions {
   excludeFolders?: Set<string>;
   onlyFolder?: string | null;
+  groupBy?: GroupBy;
 }
 
 function vaultPaths(app: App): string[] {
@@ -19,6 +20,7 @@ export function buildVaultGraph(app: App, opts: VaultGraphOptions = {}): OrreryD
   return buildGraph(vaultPaths(app), resolved, {
     excludeFolders: opts.excludeFolders,
     onlyFolder: opts.onlyFolder,
+    groupBy: opts.groupBy,
   });
 }
 

@@ -24,46 +24,15 @@
   overflow: hidden;
 }
 
-/* collapsed-by-default toggle that reveals the filter panel */
-.orrery-toggle {
-  background: rgba(45, 43, 56, 0.7);
-  color: var(--text-muted);
-  border: 1px solid rgba(128, 255, 234, 0.18);
-  border-radius: 8px;
-  padding: 4px 12px;
-  font-size: 0.72em;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-.orrery-toggle:hover {
-  color: #80ffea;
-  border-color: rgba(128, 255, 234, 0.45);
-}
-.orrery-caret {
-  font-size: 0.9em;
-  opacity: 0.8;
-}
-
-/* the revealable panel holding chips + legend */
-.orrery-filters {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.orrery-filters.is-hidden {
-  display: none;
-}
-
+/* opt-in folder filter row: always a single line so the layout never reflows
+   when you switch folders (horizontal scroll if there are many) */
 .orrery-chips {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  width: 100%;
 }
 
 .orrery-chip {
@@ -88,28 +57,6 @@
   border-color: #80ffea;
   box-shadow: 0 0 10px rgba(128, 255, 234, 0.5);
   font-weight: 700;
-}
-
-.orrery-legend {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: 0.72em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.orrery-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.orrery-legend-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  display: inline-block;
 }
 
 /* embedded-in-a-note orrery (the ```orrery code block). Height set inline. */

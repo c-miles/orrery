@@ -29,6 +29,7 @@ export function registerCodeblock(plugin: OrreryPlugin): void {
     const data = buildVaultGraph(plugin.app, {
       excludeFolders: plugin.excludeSet(),
       onlyFolder,
+      groupBy: plugin.settings.colorBy,
     });
     if (!data.nodes.length) {
       mount.createDiv({ cls: "orrery-error", text: "No notes in scope." });

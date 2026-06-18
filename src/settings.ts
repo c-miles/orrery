@@ -1,6 +1,7 @@
 import { PluginSettingTab, Setting, type App } from "obsidian";
 import type OrreryPlugin from "./main";
 import type { OrreryOptions } from "./orrery/types";
+import type { GroupBy } from "./orrery/graph";
 import { makePalette, parseOverrides } from "./orrery/colors";
 
 export interface OrrerySettings {
@@ -11,6 +12,10 @@ export interface OrrerySettings {
   showNebula: boolean;
   showStarfield: boolean;
   showHaze: boolean;
+  /** Show the top-of-pane folder filter bar. Off = pure orrery. */
+  showFilters: boolean;
+  /** Which folder level drives node color: top-level or subfolder. */
+  colorBy: GroupBy;
   /** Comma-separated top-level folders to hide. */
   excludeFolders: string;
   /** "Folder: #rrggbb" lines overriding the auto folder color. */
@@ -25,6 +30,8 @@ export const DEFAULT_SETTINGS: OrrerySettings = {
   showNebula: true,
   showStarfield: true,
   showHaze: true,
+  showFilters: false,
+  colorBy: "folder",
   excludeFolders: "",
   colorOverrides: "",
 };
@@ -56,6 +63,32 @@ export class OrrerySettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Orrery" });
+
+    new Setting(containerEl)
+      .setName("Show folder filter bar")
+      .setDesc("Show a row of folder chips at the top of the view to scope the graph. Off by default for a clean, full-pane orrery.")
+      .addToggle((tg) =>
+        tg.setValue(this.plugin.settings.showFilters).onChange(async (v) => {
+          this.plugin.settings.showFilters = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Color nodes by")
+      .setDesc(
+        "Subfolder gives more, more varied colors (closer to a hand-tuned graph). Top-level folder gives fewer, broader color groups."
+      )
+      .addDropdown((dd) =>
+        dd
+          .addOption("folder", "Subfolder (more colors)")
+          .addOption("top", "Top-level folder (fewer colors)")
+          .setValue(this.plugin.settings.colorBy)
+          .onChange(async (v) => {
+            this.plugin.settings.colorBy = v as GroupBy;
+            await this.plugin.saveSettings();
+          })
+      );
 
     new Setting(containerEl)
       .setName("Rotation speed")

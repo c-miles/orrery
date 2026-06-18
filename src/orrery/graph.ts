@@ -7,17 +7,36 @@ import type { OrreryData, OrreryNode } from "./types";
 // Obsidian's resolvedLinks shape: { [sourcePath]: { [destPath]: count } }.
 export type ResolvedLinks = Record<string, Record<string, number>>;
 
+// How nodes are bucketed for color. "top" = top-level folder (few colors,
+// clean); "folder" = the file's immediate containing folder path (more colors,
+// closer to a hand-tuned palette). Filtering always uses the top-level folder
+// regardless of this.
+export type GroupBy = "top" | "folder";
+
 export interface BuildOptions {
   /** Top-level folders to exclude entirely. */
   excludeFolders?: Set<string>;
   /** If set, keep only files whose top-level folder equals this. */
   onlyFolder?: string | null;
+  /** Which folder level drives the color bucket. Defaults to "top". */
+  groupBy?: GroupBy;
 }
 
 // Top-level folder of a vault path. "a/b/c.md" -> "a"; "note.md" -> "(root)".
 export function topLevelFolder(path: string): string {
   const slash = path.indexOf("/");
   return slash === -1 ? "(root)" : path.slice(0, slash);
+}
+
+// Immediate containing folder of a vault path. "a/b/c.md" -> "a/b";
+// "a/x.md" -> "a"; "note.md" -> "(root)".
+export function containingFolder(path: string): string {
+  const slash = path.lastIndexOf("/");
+  return slash === -1 ? "(root)" : path.slice(0, slash);
+}
+
+function groupFor(path: string, groupBy: GroupBy): string {
+  return groupBy === "folder" ? containingFolder(path) : topLevelFolder(path);
 }
 
 function basename(path: string): string {
@@ -34,6 +53,7 @@ export function buildGraph(
 ): OrreryData {
   const exclude = opts.excludeFolders ?? new Set<string>();
   const only = opts.onlyFolder ?? null;
+  const groupBy = opts.groupBy ?? "top";
 
   const inScope = (p: string): boolean => {
     if (!p.endsWith(".md")) return false;
@@ -62,7 +82,7 @@ export function buildGraph(
     nodes.push({
       id: p,
       label: basename(p),
-      group: topLevelFolder(p),
+      group: groupFor(p, groupBy),
       deg: deg.get(p) ?? 0,
     });
   }

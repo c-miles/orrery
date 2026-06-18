@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { topLevelFolder, buildGraph, foldersIn } from "../src/orrery/graph";
+import {
+  topLevelFolder,
+  containingFolder,
+  buildGraph,
+  foldersIn,
+} from "../src/orrery/graph";
 
 describe("topLevelFolder", () => {
   it("returns the first path segment", () => {
@@ -7,6 +12,18 @@ describe("topLevelFolder", () => {
   });
   it("returns (root) for a file with no folder", () => {
     expect(topLevelFolder("note.md")).toBe("(root)");
+  });
+});
+
+describe("containingFolder", () => {
+  it("returns the immediate parent folder for a nested path", () => {
+    expect(containingFolder("a/b/c.md")).toBe("a/b");
+  });
+  it("returns the folder for a one-level path", () => {
+    expect(containingFolder("a/x.md")).toBe("a");
+  });
+  it("returns (root) for a top-level file", () => {
+    expect(containingFolder("note.md")).toBe("(root)");
   });
 });
 
@@ -41,6 +58,22 @@ describe("buildGraph", () => {
     const g = buildGraph(paths, resolved as any, { onlyFolder: "A" });
     expect(g.nodes.every((n) => n.group === "A")).toBe(true);
     expect(g.nodes.length).toBe(2);
+  });
+
+  it("groupBy 'folder' colors by subfolder; scope still uses top-level", () => {
+    const p = ["Wiki/concepts/a.md", "Wiki/entities/b.md"];
+    const r = { "Wiki/concepts/a.md": { "Wiki/entities/b.md": 1 } };
+    const g = buildGraph(p, r as any, { groupBy: "folder" });
+    expect(g.nodes.map((n) => n.group).sort()).toEqual([
+      "Wiki/concepts",
+      "Wiki/entities",
+    ]);
+    // excludeFolders still operates on the top-level folder ("Wiki")
+    const excl = buildGraph(p, r as any, {
+      groupBy: "folder",
+      excludeFolders: new Set(["Wiki"]),
+    });
+    expect(excl.nodes.length).toBe(0);
   });
 });
 
