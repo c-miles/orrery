@@ -55,7 +55,7 @@ export class OrrerySettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "orrery" });
+    containerEl.createEl("h2", { text: "Orrery" });
 
     new Setting(containerEl)
       .setName("Rotation speed")
