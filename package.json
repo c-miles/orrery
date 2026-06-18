@@ -1,6 +1,6 @@
 {
   "name": "obsidian-orrery",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Render your vault's link graph as a cinematic, auto-rotating 3D orrery.",
   "main": "main.js",
   "scripts": {
@@ -14,7 +14,7 @@
     "3d",
     "visualization"
   ],
-  "author": "Anomaly Labs",
+  "author": "Chris Miles",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -44,6 +44,10 @@ npm test        # unit tests (vitest)
 
 The renderer core under `src/orrery/` is host-agnostic (no Obsidian imports) so it can be reused outside Obsidian.
 
+## Credits
+
+Built by Chris Miles. I also build [parry](https://parryai.app).
+
 ## License
 
 MIT
