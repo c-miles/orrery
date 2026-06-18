@@ -96,7 +96,12 @@ export function renderOrrery(
   // Camera placed up front with a 0s transition (no fly-in animation), at a
   // distance scaled by node count, from a random point on the surrounding sphere
   // so each open starts at a fresh orientation.
-  const dist = Math.min(580, 235 + Math.sqrt(data.nodes.length) * 30);
+  // Frame the whole graph at a glance: distance grows with node count (a 3D
+  // force layout's extent scales ~sqrt(n)). The old hard 580 cap zoomed large
+  // vaults in too far, leaving nodes off-screen until they rotated in. initialZoom
+  // lets the user pull back further (<1) or move in closer (>1).
+  const baseDist = Math.min(2600, 250 + Math.sqrt(data.nodes.length) * 40);
+  const dist = baseDist / Math.max(0.1, options.initialZoom);
   const u = Math.random();
   const v = Math.random();
   const theta = 2 * Math.PI * u;

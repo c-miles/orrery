@@ -28,6 +28,8 @@ export interface OrreryOptions {
   bloomStrength: number;
   /** Multiplier on node radius. */
   nodeScale: number;
+  /** Initial camera zoom. Below 1 pulls back to fit more; above 1 moves closer. */
+  initialZoom: number;
   /** CSS color behind the graph. */
   background: string;
   showNebula: boolean;

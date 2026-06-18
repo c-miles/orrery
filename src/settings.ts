@@ -8,6 +8,7 @@ export interface OrrerySettings {
   rotateSpeed: number;
   bloomStrength: number;
   nodeScale: number;
+  initialZoom: number;
   background: string;
   showNebula: boolean;
   showStarfield: boolean;
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: OrrerySettings = {
   rotateSpeed: 0.45,
   bloomStrength: 1.1,
   nodeScale: 1,
+  initialZoom: 1,
   background: "#000006",
   showNebula: true,
   showStarfield: true,
@@ -44,6 +46,7 @@ export function optionsFromSettings(s: OrrerySettings): OrreryOptions {
     rotateSpeed: s.rotateSpeed,
     bloomStrength: s.bloomStrength,
     nodeScale: s.nodeScale,
+    initialZoom: s.initialZoom,
     background: s.background,
     showNebula: s.showNebula,
     showStarfield: s.showStarfield,
@@ -127,6 +130,22 @@ export class OrrerySettingTab extends PluginSettingTab {
           .setDynamicTooltip()
           .onChange(async (v) => {
             this.plugin.settings.nodeScale = v;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Initial zoom")
+      .setDesc(
+        "Camera framing on open. Below 1 pulls back to fit more of large graphs; above 1 starts closer. You can still scroll to zoom after it loads."
+      )
+      .addSlider((sl) =>
+        sl
+          .setLimits(0.3, 2.5, 0.1)
+          .setValue(this.plugin.settings.initialZoom)
+          .setDynamicTooltip()
+          .onChange(async (v) => {
+            this.plugin.settings.initialZoom = v;
             await this.plugin.saveSettings();
           })
       );
