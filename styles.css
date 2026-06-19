@@ -24,6 +24,15 @@
   overflow: hidden;
 }
 
+/* Cursor feedback over the orrery, toggled from JS via classes (so the renderer
+   never writes element.style directly). Grabbing wins while a node is dragged. */
+.orrery-cursor-pointer {
+  cursor: pointer;
+}
+.orrery-cursor-grabbing {
+  cursor: grabbing;
+}
+
 /* opt-in folder filter row: always a single line so the layout never reflows
    when you switch folders (horizontal scroll if there are many) */
 .orrery-chips {

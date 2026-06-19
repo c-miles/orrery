@@ -290,14 +290,14 @@ export function renderOrrery(
       const on = !hoverId || mid === hoverId || (keep ? keep.has(mid) : false);
       (mesh.material as THREE.MeshBasicMaterial).opacity = on ? BASE_OP : DIM_OP;
     });
-    mount.style.cursor = hoverId ? "pointer" : "";
+    mount.classList.toggle("orrery-cursor-pointer", !!hoverId);
   });
 
   // ---- pin-and-move drag (optional): grab a node, it + its incident edges
   // follow the cursor; the rest of the frozen galaxy keeps rotating. No reheat;
   // cost is O(degree of the grabbed node), independent of graph size. ----
   const dom = graph.renderer().domElement;
-  const camera = graph.camera() as THREE.Camera;
+  const camera = graph.camera();
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const dragPlane = new THREE.Plane();
@@ -345,7 +345,7 @@ export function renderOrrery(
     } catch {
       // ignore: capture is best-effort
     }
-    mount.style.cursor = "grabbing";
+    mount.classList.add("orrery-cursor-grabbing");
   }
 
   function onPointerMove(e: PointerEvent): void {
@@ -393,7 +393,7 @@ export function renderOrrery(
     } catch {
       // ignore: capture may already be gone
     }
-    mount.style.cursor = "";
+    mount.classList.remove("orrery-cursor-grabbing");
   }
 
   dom.addEventListener("pointerdown", onPointerDown);
