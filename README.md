@@ -58,7 +58,7 @@ The renderer under `src/orrery/` has no Obsidian imports, so it can be reused ou
 
 ## Also by me
 
-If you like Orrery, I also make [parry](https://parryai.app), an AI app that helps you write better replies to your messages. Give it a look.
+Completely unrelated to graphs, but the main thing I build is [parry](https://parryai.app), a mobile AI messaging app. Take a look if you're curious what I do when I'm not tricking out my vault.
 
 ## License
 
