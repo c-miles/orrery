@@ -35,6 +35,8 @@ export interface OrreryOptions {
   showNebula: boolean;
   showStarfield: boolean;
   showHaze: boolean;
+  /** Allow grabbing a node to reposition it (its edges follow, the rest of the layout stays frozen). */
+  enableDrag: boolean;
   /** Optional host callback when a node is clicked. */
   onNodeClick?: (node: OrreryNode) => void;
 }

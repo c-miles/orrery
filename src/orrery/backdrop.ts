@@ -49,7 +49,7 @@ export function makeStarfield(count = 1400, spread = 4000): THREE.Points {
   return new THREE.Points(geo, mat);
 }
 
-// Procedural nebula backdrop: a huge inverted sphere shaded by a 5-octave FBM
+// Procedural nebula backdrop: a huge inverted sphere shaded by a 3-octave FBM
 // noise field, kept low-luminance so it stays under the bloom threshold.
 export function makeNebula(radius = 5000): THREE.Mesh {
   const uniforms = {
@@ -74,7 +74,7 @@ export function makeNebula(radius = 5000): THREE.Mesh {
                  mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),
                      mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);
     }
-    float fbm(vec3 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.0; a*=0.5; } return v; }
+    float fbm(vec3 p){ float v=0.0,a=0.5; for(int i=0;i<3;i++){ v+=a*noise(p); p*=2.0; a*=0.5; } return v; }
     void main(){
       vec3 d = normalize(vDir);
       float n = pow(fbm(d * 3.0), 2.2);

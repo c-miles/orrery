@@ -13,6 +13,8 @@ export interface OrrerySettings {
   showNebula: boolean;
   showStarfield: boolean;
   showHaze: boolean;
+  /** Allow grabbing a node to reposition it (pin-and-move). Off by default. */
+  enableDrag: boolean;
   /** Show the top-of-pane folder filter bar. Off = pure orrery. */
   showFilters: boolean;
   /** Which folder level drives node color: top-level or subfolder. */
@@ -32,6 +34,7 @@ export const DEFAULT_SETTINGS: OrrerySettings = {
   showNebula: true,
   showStarfield: true,
   showHaze: true,
+  enableDrag: false,
   showFilters: false,
   colorBy: "folder",
   excludeFolders: "",
@@ -51,6 +54,7 @@ export function optionsFromSettings(s: OrrerySettings): OrreryOptions {
     showNebula: s.showNebula,
     showStarfield: s.showStarfield,
     showHaze: s.showHaze,
+    enableDrag: s.enableDrag,
   };
 }
 
@@ -90,6 +94,18 @@ export class OrrerySettingTab extends PluginSettingTab {
             this.plugin.settings.colorBy = v as GroupBy;
             await this.plugin.saveSettings();
           })
+      );
+
+    new Setting(containerEl)
+      .setName("Allow node dragging")
+      .setDesc(
+        "Let you grab a node and reposition it. The node and its links follow your cursor, the rest of the galaxy stays put and keeps rotating. Off by default. Stays smooth even on large vaults."
+      )
+      .addToggle((tg) =>
+        tg.setValue(this.plugin.settings.enableDrag).onChange(async (v) => {
+          this.plugin.settings.enableDrag = v;
+          await this.plugin.saveSettings();
+        })
       );
 
     new Setting(containerEl)
@@ -201,7 +217,7 @@ export class OrrerySettingTab extends PluginSettingTab {
       });
 
     containerEl.createEl("p", {
-      text: "Reopen the Orrery view to apply changes.",
+      text: "Reopen the Orrery view to apply changes. Very large vaults (many hundreds of notes or more) may rotate a little less smoothly.",
       cls: "orrery-settings-note",
     });
   }
