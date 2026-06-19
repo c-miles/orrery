@@ -8,15 +8,7 @@ It is mostly here to look incredible, but it is also a genuinely nice way to see
 
 The bigger and more connected your vault is, the better it looks. More notes mean more stars, more links pull those stars into tighter clusters, and more folders bring more color into the mix. A small vault looks calm and tidy. A large, heavily linked one looks like a real galaxy.
 
-## Installing
-
-Most people just install it and turn it on. Once it is in the community store, open Settings, go to Community plugins, search for "Orrery", install it, and toggle it on. That is all you need to do.
-
-To install it by hand, or from a specific release before it lands in the store: download `main.js`, `manifest.json`, and `styles.css` from the latest release, put them in a folder called `orrery` inside your vault at `.obsidian/plugins/orrery/`, then enable Orrery under Settings, Community plugins.
-
-The Development section near the bottom is only for building from source. You do not need any of it to use the plugin.
-
-## Opening it
+## Using it
 
 Click the orbit icon in the left ribbon, or open the command palette and run "Open orrery". The graph fills the pane and starts turning on its own.
 
@@ -64,9 +56,9 @@ Nodes are sized and brightened by how many links they have, so your most connect
 
 The renderer under `src/orrery/` has no Obsidian imports, so it can be reused outside Obsidian.
 
-## Credits
+## Also by me
 
-Built by Chris Miles. I also build [parry](https://parryai.app).
+If you like Orrery, I also make [parry](https://parryai.app), an AI app that helps you write better replies to your messages. Give it a look.
 
 ## License
 
