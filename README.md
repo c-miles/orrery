@@ -36,6 +36,8 @@ These all live under Settings, in the Orrery tab. Reopen the view after changing
 
 - **Show folder filter bar.** Off by default, which keeps the view clean and full. Turn it on to get a row of folder buttons across the top so you can focus the graph on one folder at a time.
 - **Color nodes by.** How nodes get their colors. "Subfolder" gives you more colors and finer detail. "Top-level folder" gives you fewer, broader groups. Either way the color comes from where a note lives.
+- **Show node labels.** Off by default. Turn it on to show each note's title under its node, handy for reading the graph and clicking between notes. It gets busier on large vaults.
+- **Allow node dragging.** Off by default. Turn it on to grab a node and move it. Its links follow and the rest of the galaxy stays put, and it stays smooth even on big vaults.
 - **Rotation speed.** How fast it spins. Set it to 0 to stop the rotation entirely.
 - **Bloom strength.** How strongly the bright nodes glow. Turn it up for more bloom, down for a cleaner look.
 - **Node size.** Makes every star bigger or smaller.
