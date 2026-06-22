@@ -16,6 +16,7 @@ import ForceGraph3D, {
 } from "3d-force-graph";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import * as THREE from "three";
+import SpriteText from "three-spritetext";
 import { hash01 } from "./colors";
 import { makeNebula, makeStarfield, makeHaze } from "./backdrop";
 import type { OrreryData, OrreryHandle, OrreryNode, OrreryOptions } from "./types";
@@ -27,6 +28,9 @@ const EDGE_DIM = "#3a5a82"; // base edge hue
 const EDGE_SEGMENTS = 6; // micro-segments per gently-curved edge
 const REST_ALPHA = 0.32; // baked into the additive resting edge colour
 const HOVER_ALPHA = 0.9; // baked into the bright (incident) edge colour
+const LABEL_COLOR = "#aab4c8"; // light slate label text
+const LABEL_HEIGHT = 4; // label world height (uniform world size; scales with camera distance)
+const LABEL_GAP = 2; // world gap below the node
 
 // Sample a gently-bowed edge between two endpoints into EDGE_SEGMENTS+1 points.
 // Shared by the one-time build and the live drag rewrite so a dragged edge keeps
@@ -99,7 +103,8 @@ export function renderOrrery(
   graph.enableNodeDrag(false); // never use the library's reheating drag
   graph.linkVisibility(false); // we draw edges ourselves (instant recolour)
   graph.graphData(data as unknown as { nodes: ON[]; links: OL[] });
-  graph.nodeLabel((n) => n.label);
+  // Hover name tooltip only when labels are off (with labels on it is redundant).
+  graph.nodeLabel((n) => (options.showLabels ? "" : n.label));
   graph.nodeColor((n) => color(n.group));
   graph.nodeVal((n) => 1 + (n.deg / maxDeg) * 10);
   graph.warmupTicks(220); // settle the layout off-screen before first paint
@@ -147,6 +152,13 @@ export function renderOrrery(
     const mesh = new THREE.Mesh(sphereGeo, mat);
     mesh.scale.setScalar(r);
     nodeMeshes.set(n.id, mesh);
+    if (options.showLabels) {
+      // Child sprite just under the node. The /r cancels the parent sphere's
+      // scale so every label is the same world height.
+      const label = new SpriteText(n.label, LABEL_HEIGHT / r, LABEL_COLOR);
+      label.position.y = -(1 + LABEL_GAP / r);
+      mesh.add(label);
+    }
     return mesh;
   });
 
@@ -453,6 +465,17 @@ export function renderOrrery(
   graph.width(mount.clientWidth || 800);
   graph.height(mount.clientHeight || 600);
 
+  // Pause the render loop whenever the orrery is hidden (background tab, scrolled
+  // out of view), so a view left open stops pegging the GPU. Resume when it
+  // comes back.
+  const visObserver = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) graph.resumeAnimation();
+      else graph.pauseAnimation();
+    }
+  });
+  visObserver.observe(mount);
+
   let destroyed = false;
   return {
     resize(width: number, height: number) {
@@ -463,6 +486,7 @@ export function renderOrrery(
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      visObserver.disconnect();
       dom.removeEventListener("pointerdown", onPointerDown);
       dom.removeEventListener("pointermove", onPointerMove);
       dom.removeEventListener("pointerup", endDrag);

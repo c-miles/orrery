@@ -15,6 +15,8 @@ export interface OrrerySettings {
   showHaze: boolean;
   /** Allow grabbing a node to reposition it (pin-and-move). Off by default. */
   enableDrag: boolean;
+  /** Show note-title labels on each node. Off by default. */
+  showLabels: boolean;
   /** Show the top-of-pane folder filter bar. Off = pure orrery. */
   showFilters: boolean;
   /** Which folder level drives node color: top-level or subfolder. */
@@ -35,6 +37,7 @@ export const DEFAULT_SETTINGS: OrrerySettings = {
   showStarfield: true,
   showHaze: true,
   enableDrag: false,
+  showLabels: false,
   showFilters: false,
   colorBy: "folder",
   excludeFolders: "",
@@ -55,6 +58,7 @@ export function optionsFromSettings(s: OrrerySettings): OrreryOptions {
     showStarfield: s.showStarfield,
     showHaze: s.showHaze,
     enableDrag: s.enableDrag,
+    showLabels: s.showLabels,
   };
 }
 
@@ -104,6 +108,18 @@ export class OrrerySettingTab extends PluginSettingTab {
       .addToggle((tg) =>
         tg.setValue(this.plugin.settings.enableDrag).onChange(async (v) => {
           this.plugin.settings.enableDrag = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Show node labels")
+      .setDesc(
+        "Show each note's title on its node so you can read the graph at a glance. Off by default. It gets busier and heavier on large vaults."
+      )
+      .addToggle((tg) =>
+        tg.setValue(this.plugin.settings.showLabels).onChange(async (v) => {
+          this.plugin.settings.showLabels = v;
           await this.plugin.saveSettings();
         })
       );

@@ -37,6 +37,8 @@ export interface OrreryOptions {
   showHaze: boolean;
   /** Allow grabbing a node to reposition it (its edges follow, the rest of the layout stays frozen). */
   enableDrag: boolean;
+  /** Show each note's title as a label on its node (default off; busier and heavier on large vaults). */
+  showLabels: boolean;
   /** Optional host callback when a node is clicked. */
   onNodeClick?: (node: OrreryNode) => void;
 }

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "3d-force-graph": "^1.80.0",
-    "three": "^0.184.0"
+    "three": "^0.184.0",
+    "three-spritetext": "^1.10.0"
   }
 }
